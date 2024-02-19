@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title> Embouteillage </title>
+      <script src="https://pixijs.download/release/pixi.js"></script>
+      <style>
+         body, html {
+             margin: 0;
+             padding: 0;
+             overflow: hidden;
+             width: 100%;
+             height: 100%;
+             display: flex;
+             justify-content: center;
+             align-items: center;
+             background-color: #000;
+         }
+         canvas {
+             background-color: #1099bb; /* Set the desired background color */
+         }
+     </style>
+ </head>
+ <body>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.3.3/pixi.min.js"></script>
+     <script>
+         // Create a Pixi Application
+         let app = new PIXI.Application({
+             backgroundColor: 0x1099bb, // Change this to your desired background color
+             antialias: true
+         });
+ 
+         // Calculate the width and height for the canvas (4:3 aspect ratio)
+         const aspectRatio = 16 / 10;
+         let canvasWidth, canvasHeight;
+         const windowAspectRatio = window.innerWidth / window.innerHeight;
+         if (windowAspectRatio > aspectRatio) {
+             canvasWidth = window.innerHeight * aspectRatio;
+             canvasHeight = window.innerHeight;
+         } else {
+             canvasWidth = window.innerWidth;
+             canvasHeight = window.innerWidth / aspectRatio;
+         }
+ 
+         // Set the canvas size
+         app.renderer.resize(canvasWidth, canvasHeight);
+ 
+         // Add the canvas that Pixi automatically created to the HTML document
+         document.body.appendChild(app.view);
+ 
+         // Resize the canvas when the window is resized
+         window.addEventListener('resize', resizeCanvas);
+ 
+         function resizeCanvas() {
+             const windowAspectRatio = window.innerWidth / window.innerHeight;
+             if (windowAspectRatio > aspectRatio) {
+                 canvasWidth = window.innerHeight * aspectRatio;
+                 canvasHeight = window.innerHeight;
+             } else {
+                 canvasWidth = window.innerWidth;
+                 canvasHeight = window.innerWidth / aspectRatio;
+             }
+             app.renderer.resize(canvasWidth, canvasHeight);
+         }
+ 
+         // Call resize once to set initial canvas size
+         resizeCanvas();
+ 
+         // Load the car image
+        PIXI.Loader.shared.add('car', 'img/car.png').load(setup);
+
+         let carSprite;
+
+         function setup() {
+            // Create a sprite from the car texture
+            carSprite = new PIXI.Sprite(PIXI.Texture.from('car'));
+            carSprite.anchor.set(0.5);
+            carSprite.x = app.renderer.width / 2;
+            carSprite.y = app.renderer.height / 1.4;
+            carSprite.width = 35
+            carSprite.height = 70
+            app.stage.addChild(carSprite);
+         }
+        
+         // Set up keyboard input handling
+         const LEFT_ARROW_KEY = 37;
+         const RIGHT_ARROW_KEY = 39;
+
+         const keysPressed = {};
+
+         window.addEventListener('keydown', (event) => {
+            keysPressed[event.keyCode] = true;
+         });
+
+         window.addEventListener('keyup', (event) => {
+            delete keysPressed[event.keyCode];
+         });
+
+         let fallingRectangles = [];
+ 
+         // Function to create and add a falling rectangle
+         function createFallingRectangle() {
+             const rectangle = new PIXI.Graphics();
+             rectangle.beginFill(0xFF0000); // Red color
+             rectangle.drawRect(0, 0, 30, 30); // Adjust size as needed
+             rectangle.endFill();
+             rectangle.x = Math.random() * (app.renderer.width / 2.5 - app.renderer.width / 1.6) + app.renderer.width / 1.6; // Random x position
+             rectangle.y = -30; // Start above the screen
+             app.stage.addChild(rectangle);
+             fallingRectangles.push(rectangle);
+         }
+
+         function updateFallingRectangles() {
+            const speed = 10; // Adjust speed as needed
+
+            fallingRectangles.forEach((rectangle, index) => {
+                rectangle.y += speed; // Move the rectangle downwards
+                // If the rectangle reaches the bottom of the screen, remove it from the stage
+                if (rectangle.y > app.renderer.height) {
+                    app.stage.removeChild(rectangle); // Remove from stage
+                    fallingRectangles.splice(index, 1); // Remove from array
+                }
+            });
+        }
+
+         function createRandomFallingRectangles() {
+            setInterval(() => {
+                createFallingRectangle();
+            }, 1000); // Adjust the interval as needed (milliseconds)
+         }
+
+         // Update function to move the car
+         function update() {
+            updateFallingRectangles();
+            const speed = 5
+            if (keysPressed[LEFT_ARROW_KEY]) {
+                carSprite.x -= speed;
+                if (carSprite.x < app.renderer.width / 2.5) {
+                    carSprite.x = app.renderer.width / 2.5; 
+                }
+            }
+            if (keysPressed[RIGHT_ARROW_KEY]) {
+               carSprite.x += speed;
+                if (carSprite.x > app.renderer.width / 1.6) {
+                    carSprite.x = app.renderer.width / 1.6;
+                }
+            }
+         }
+         let tick = 0;
+         
+         // Render loop
+         app.ticker.add(() => {
+            update();
+            tick += 1;
+            if (tick % 400 == 0) {
+                createRandomFallingRectangles();
+            }
+         });
+     </script>
+   </body>
+</html>
+
